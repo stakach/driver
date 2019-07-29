@@ -1,6 +1,7 @@
 require "logger"
-require "redis"
 require "retriable/core_ext/kernel"
+
+require "./redis"
 
 class EngineDriver::Subscriptions
   SYSTEM_ORDER_UPDATE = "lookup-change"
@@ -42,7 +43,7 @@ class EngineDriver::Subscriptions
   end
 
   protected def new_redis_client
-    Redis.new(url: ENV["REDIS_URL"]?)
+    EngineDriver::RedisClient.new
   end
 
   @redis_subscribe : Redis

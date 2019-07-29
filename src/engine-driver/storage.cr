@@ -1,31 +1,21 @@
-require "redis"
+require "./redis"
 
 abstract class EngineDriver; end
 
 class EngineDriver::Storage < Hash(String, String)
-  @@instance : Redis::PooledClient?
-
-  REDIS_URL = ENV["REDIS_URL"]?
-  REDIS_HOST = ENV["REDIS_HOST"]? || "localhost"
-  REDIS_PORT = (ENV["REDIS_PORT"]? || 6379).to_i
-
-  def self.redis_pool : Redis::PooledClient
-    if REDIS_URL
-      @@instance ||= Redis::PooledClient.new(url: REDIS_URL)
-    else
-      @@instance ||= Redis::PooledClient.new(host: REDIS_HOST, port: REDIS_PORT)
-    end
+  def self.get(key)
+    self.redis_pool.instance.get(key.to_s)
   end
 
-  def self.get(key)
-    redis_pool.get(key.to_s)
+  def self.redis_pool
+    EngineDriver::RedisClient::Pool.instance
   end
 
   DEFAULT_PREFIX = "status"
 
   def initialize(@module_id : String, prefix = DEFAULT_PREFIX)
     super()
-    @redis = self.class.redis_pool
+    @redis = EngineDriver::RedisClient::Pool.instance
     @hash_key = "#{prefix}\x02#{@module_id}"
   end
 
